@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { ThreeDots } from 'react-loader-spinner';
 
 import Searchbar from '../Searchbar/Searchbar';
@@ -8,128 +8,122 @@ import { Container, ErrorMessage } from './App.styled';
 import Button from 'components/Button/Button';
 import Modal from 'components/Modal/Modal';
 
-export class App extends Component {
-  state = {
-    search: '',
-    page: 1,
-    results: [],
-    totalResults: 0,
-    loading: false,
-    isShown: false,
-    urlModal: null,
-  };
+export const App = () => {
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [results, setResults] = useState([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [isShown, setIsShown] = useState(false);
+  const [urlModal, setUrlModal] = useState(null);
 
-  async componentDidUpdate(prevProp, prevState) {
-    const { search, page } = this.state;
-    if (prevState.search !== search) {
-      this.setState({
-        results: [],
-        totalResults: 0,
-        loading: true,
-      });
+  useEffect(() => {
+    if (search === '') {
+      return;
+    }
+    setLoading(true);
 
-      try {
-        await getImages(search).then(data => {
+    async function fetchData() {
+      if (page === 1) {
+        setResults([]);
+        setTotalResults(0);
+        try {
+          const data = await getImages(search);
           const res = data.hits.map(({ id, webformatURL, largeImageURL }) => {
             return { id, webformatURL, largeImageURL };
           });
-          this.setState({
-            results: res,
-            totalResults: data.totalHits,
-            loading: false,
-          });
-        });
-      } catch (error) {
-        console.error(error);
-        this.setState({ loading: false });
-      }
-    } else if (prevState.page !== page) {
-      this.setState({ loading: true });
-
-      try {
-        await getImages(search, page).then(data => {
+          setResults([...res]);
+          setTotalResults(data.total);
+          setLoading(false);
+        } catch (error) {
+          console.error(error);
+          setLoading(false);
+        }
+      } else {
+        try {
+          const data = await getImages(search, page);
           const res = data.hits.map(({ id, webformatURL, largeImageURL }) => {
             return { id, webformatURL, largeImageURL };
           });
 
-          this.setState({
-            results: [...prevState.results, ...res],
-            loading: false,
-            page,
-          });
-        });
-      } catch (error) {
-        console.error(error);
-        this.setState({ loading: false });
+          setResults(prevResults => [...prevResults, ...res]);
+          setLoading(false);
+          setPage(page);
+        } catch (error) {
+          console.error(error);
+          setLoading(false);
+        }
       }
     }
-  }
+    fetchData();
+  }, [search, page]);
 
-  formSubmit = searchValue => {
-    this.setState({
-      search: searchValue,
-      page: 1,
-    });
+  const formSubmit = searchValue => {
+    setSearch(searchValue);
+    setPage(1);
   };
 
-  loadMore = page => {
-    this.setState({
-      page,
-    });
+  const loadMore = page => {
+    setPage(page);
   };
 
-  openModalImg = element => {
+  const openModalImg = element => {
     if (element.nodeName !== 'IMG') {
       return;
     }
 
-    this.toggleModal();
-    this.setState({
-      urlModal: element.dataset.url,
-    });
+    toggleModal();
+    setUrlModal(element.dataset.url);
   };
 
-  toggleModal = () => {
-    this.setState({
-      isShown: !this.state.isShown,
-    });
+  const toggleModal = () => {
+    setIsShown(!isShown);
   };
 
-  render() {
-    const { search, loading, results, page, urlModal, totalResults } =
-      this.state;
+  return (
+    <Container>
+      <Searchbar onSubmit={formSubmit} />
+      {loading && results.length < 12 && (
+        <ThreeDots
+          height="100"
+          width="100"
+          radius="9"
+          color="#3f51b5"
+          ariaLabel="three-dots-loading"
+          wrapperStyle={{
+            justifySelf: 'center',
+          }}
+          wrapperClassName=""
+          visible={true}
+        />
+      )}
 
-    return (
-      <Container>
-        <Searchbar onSubmit={this.formSubmit} />
-        {loading && (
-          <ThreeDots
-            height="100"
-            width="100"
-            radius="9"
-            color="#3f51b5"
-            ariaLabel="three-dots-loading"
-            wrapperStyle={{
-              justifySelf: 'center',
-            }}
-            wrapperClassName=""
-            visible={true}
-          />
-        )}
-        {results.length > 0 && (
-          <ImageGallery items={results} openModal={this.openModalImg} />
-        )}
-        {this.state.isShown && (
-          <Modal urlItem={urlModal} toggleModal={this.toggleModal} />
-        )}
-        {results.length > 0 && results.length < totalResults && !loading && (
-          <Button value={search} loadMore={this.loadMore} numberPage={page} />
-        )}
+      {results.length > 0 && (
+        <ImageGallery items={results} openModal={openModalImg} />
+      )}
+      {loading && results.length >= 12 && (
+        <ThreeDots
+          height="100"
+          width="100"
+          radius="9"
+          color="#3f51b5"
+          ariaLabel="three-dots-loading"
+          wrapperStyle={{
+            justifySelf: 'center',
+          }}
+          wrapperClassName=""
+          visible={true}
+        />
+      )}
 
-        {totalResults === 0 && search && !loading && (
-          <ErrorMessage>Ooops, something went wrong :(</ErrorMessage>
-        )}
-      </Container>
-    );
-  }
-}
+      {isShown && <Modal urlItem={urlModal} toggleModal={toggleModal} />}
+      {results.length > 0 && results.length < totalResults && !loading && (
+        <Button value={search} loadMore={loadMore} numberPage={page} />
+      )}
+
+      {totalResults === 0 && search && !loading && (
+        <ErrorMessage>Ooops, something went wrong :(</ErrorMessage>
+      )}
+    </Container>
+  );
+};

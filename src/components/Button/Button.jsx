@@ -1,24 +1,16 @@
-import { Component } from 'react';
 import { LoadMoreBtn } from './Button.styled';
 
-class Button extends Component {
-  state = {
-    page: 1,
+const Button = ({ loadMore, numberPage }) => {
+  const handleClick = () => {
+    const newPage = numberPage + 1;
+    loadMore(newPage);
   };
 
-  handleClick = () => {
-    this.setState({ page: this.props.numberPage + 1 }, () => {
-      this.props.loadMore(this.state.page);
-    });
-  };
-
-  render() {
-    return (
-      <LoadMoreBtn type="button" onClick={this.handleClick}>
-        Load more
-      </LoadMoreBtn>
-    );
-  }
-}
+  return (
+    <LoadMoreBtn type="button" onClick={handleClick}>
+      Load more
+    </LoadMoreBtn>
+  );
+};
 
 export default Button;

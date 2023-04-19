@@ -1,39 +1,35 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import { ModalWindow, Overlay } from './Modal.styled';
 
-class Modal extends Component {
-  componentDidMount = () => {
-    window.addEventListener('keydown', this.onEscPress);
-    window.addEventListener('click', this.onBackdropClick);
-  };
+const Modal = ({ urlItem, toggleModal }) => {
+  useEffect(() => {
+    const onEscPress = e => {
+      if (e.code === 'Escape') {
+        toggleModal();
+      }
+    };
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.onEscPress);
-    window.removeEventListener('click', this.onBackdropClick);
-  }
+    const onBackdropClick = e => {
+      if (e.target.nodeName !== 'IMG') {
+        toggleModal();
+      }
+    };
+    window.addEventListener('keydown', onEscPress);
+    window.addEventListener('click', onBackdropClick);
 
-  onEscPress = e => {
-    if (e.code === 'Escape') {
-      this.props.toggleModal();
-    }
-  };
+    return () => {
+      window.removeEventListener('keydown', onEscPress);
+      window.removeEventListener('click', onBackdropClick);
+    };
+  }, [toggleModal]);
 
-  onBackdropClick = e => {
-    if (e.target.nodeName !== 'IMG') {
-      this.props.toggleModal();
-    }
-  };
-
-  render() {
-    const { urlItem } = this.props;
-    return (
-      <Overlay>
-        <ModalWindow>
-          <img src={urlItem} alt="" />
-        </ModalWindow>
-      </Overlay>
-    );
-  }
-}
+  return (
+    <Overlay>
+      <ModalWindow>
+        <img src={urlItem} alt="" />
+      </ModalWindow>
+    </Overlay>
+  );
+};
 
 export default Modal;

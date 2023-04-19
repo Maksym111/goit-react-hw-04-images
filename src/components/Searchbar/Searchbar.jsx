@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { CiSearch } from 'react-icons/ci';
+
 import {
   SearchBtnSpan,
   SearchButton,
@@ -5,48 +8,39 @@ import {
   SearchInput,
   SearchbarHeader,
 } from './Searchbar.styled';
-import { CiSearch } from 'react-icons/ci';
 
-const { Component } = require('react');
+const Searchbar = ({ onSubmit }) => {
+  const [text, setText] = useState('');
 
-class Searchbar extends Component {
-  state = {
-    text: '',
+  const handleInput = e => {
+    setText(e.target.value.trim());
   };
 
-  handleInput = e => {
-    this.setState({
-      text: e.target.value.trim(),
-    });
-  };
-
-  onSubmitForm = e => {
+  const onSubmitForm = e => {
     e.preventDefault();
-    this.props.onSubmit(this.state.text);
+    onSubmit(text);
   };
 
-  render() {
-    return (
-      <SearchbarHeader>
-        <SearchForm onSubmit={this.onSubmitForm}>
-          <SearchButton type="submit">
-            <SearchBtnSpan>
-              <CiSearch value={{ style: { width: 50, height: 50 } }} />
-            </SearchBtnSpan>
-          </SearchButton>
+  return (
+    <SearchbarHeader>
+      <SearchForm onSubmit={onSubmitForm}>
+        <SearchButton type="submit">
+          <SearchBtnSpan>
+            <CiSearch value={{ style: { width: 50, height: 50 } }} />
+          </SearchBtnSpan>
+        </SearchButton>
 
-          <SearchInput
-            type="text"
-            autoComplete="off"
-            value={this.state.text}
-            autoFocus
-            placeholder="Search images and photos"
-            onChange={this.handleInput}
-          />
-        </SearchForm>
-      </SearchbarHeader>
-    );
-  }
-}
+        <SearchInput
+          type="text"
+          autoComplete="off"
+          value={text}
+          autoFocus
+          placeholder="Search images and photos"
+          onChange={handleInput}
+        />
+      </SearchForm>
+    </SearchbarHeader>
+  );
+};
 
 export default Searchbar;
